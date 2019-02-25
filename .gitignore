@@ -1,36 +1,118 @@
-# History files
-.Rhistory
-.Rapp.history
+#Question 1:
 
-# Session Data files
-.RData
+set.seed(1)
+#1.a
+x<-c(1:999)  #defining the 999 observation
+y<-0.05*x + 5 +rnorm(999, 0, 1)   #generating the assosciated data with normal distribution with 0 as mean and 1 as standard deviation
+regression_model<-lm(y~x)        #Creating the classic regression model
+#1.b
+summary(regression_model) 
 
-# Example code in package build process
-*-Ex.R
 
-# Output files from R CMD build
-/*.tar.gz
+x_outlier<-c(x,2000)   #adding to outlier to x
+y_outlier<-c(y,-5000)   #adding to outlier to y       
+model_outlier<-lm(y_outlier~x_outlier) #regression model with the outlier
+#1.c
+summary(model_outlier)
+#1.d
+plot(x, y, xlab = "X (999 observation)", ylab = "Y (999 observation)", pch=19)  #plotting the first 999 observation
+abline(regression_model, col='blue') #plotting the regresion line for 999 observation
 
-# Output files from R CMD check
-/*.Rcheck/
+plot(x_outlier,y_outlier,xlab = "X with the Outlier", ylab = "Y with the Outlier", pch=19)  #plotting the 1000 observation with the outlier
+abline(model_outlier, col='red')  #plotting the regresion line for 1000 observation
 
-# RStudio files
-.Rproj.user/
+plot(x_outlier, y_outlier, ylab='y',xlab='x', pch=19)
+abline(model_outlier, col='red')
+abline(regression_model, col='blue')
+legend("bottomleft", c("999 observation", "1000 observation"), col=c("blue", "red"), lwd=10)
 
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
+#Question 2:
+library(Matching)
+library(arm)
+data(lalonde)
+treat <- which(lalonde$treat == 0)
+la <- lalonde[treat, ] #only keeping the observation with treat == 0
+keep<-c("age","educ","re74","re75","re78") #keeping the necessary collumns
+la<-la[keep]
+lm <- lm(re78 ~ age + educ + re74 + re75 + educ*re74 + educ*re75 + age*re74 + age*re75 + age*age + re74*re75, data = la)
+summary(lm) #linear regression model
 
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
+#2a.i no sigma, hold on median
 
-# knitr and R markdown default cache directories
-/*_cache/
-/cache/
+sim<-sim(lm,10000) #Simulate the function 10000 times
 
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
+matrix<-matrix(rep(1:10000*39), nrow = 10000, ncol = 39)    #Storage matrix for 10000 predicted value for 39 different value of age
 
-# Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
-rsconnect/
+for (age in c(17:55)){
+median_educ <- median(la$educ)
+median_re74 <- median(la$re74)
+median_re75 <- median(la$re75)
+for(i in 1:10000){
+merge <- c(1, age, median_educ,median_re74,median_re75, median_educ*median_re74,median_educ*median_re75, age*median_re74, age*median_re75, age*age, median_re74*median_re75) 
+matrix[i,age-16] <- sum(merge*sim@coef[i,])
+}
+}
+confidence_intervals_median <- apply(matrix, 2, quantile, probs = c(0.05, 0.95))    #Calculating confidence intervals from simulation
+confidence_intervals_median
+
+#2a.ii no sigma, hold on upper quartie (0.75)
+matrix2 <- matrix(rep(1:10000*39), nrow = 10000, ncol = 39)    
+for (age in c(17:55)){
+q75_educ <- quantile(la$educ,0.75)
+q75_re74 <- quantile(la$re74, 0.75)
+q75_re75 <- quantile(la$re75, 0.75)
+for(i in 1:10000){
+merge2 <- c(1, age, q75_educ,q75_re74,q75_re75, q75_educ*q75_re74,q75_educ*q75_re75, age*q75_re74, age*q75_re75, age*age, q75_re74*q75_re75) 
+matrix2[i,age-16] <- sum(merge2*sim@coef[i,])
+}
+}
+confidence_intervals_q75 <- apply(matrix2, 2, quantile, probs = c(0.05, 0.95))    #Calculating confidence intervals from simulation
+
+confidence_intervals_q75
+
+#2a.iii with sigma, hold on median
+
+matrix3<-matrix(rep(1:10000*39), nrow = 10000, ncol = 39)        #Storage matrix for 10000 predicted value for 39 different value of age
+
+for (age in c(17:55)){
+median_educ <- median(la$educ)
+median_re74 <- median(la$re74)
+median_re75 <- median(la$re75)
+for(i in 1:10000){
+merge3 <- c(1, age, median_educ,median_re74,median_re75, median_educ*median_re74,median_educ*median_re75, age*median_re74, age*median_re75, age*age, median_re74*median_re75) 
+matrix3[i,age-16] <- sum(merge3*sim@coef[i,]+rnorm(1,0,sim@sigma[i]))
+}
+}
+confidence_intervals_median_sigma <- apply(matrix3, 2, quantile, probs = c(0.05, 0.95)) #Calculating confidence intervals from simulation
+confidence_intervals_median_sigma 
+
+#2a.iv with sigma, upper quartile (0.75)
+#same upper quartile values can be used from 2b, so I will use predefined values kept at upper quartile
+
+matrix4 <- matrix(rep(1:10000*39), nrow = 10000, ncol = 39)    
+for (age in c(17:55)){
+for(i in 1:10000){
+merge4 <- c(1, age, q75_educ,q75_re74,q75_re75, q75_educ*q75_re74,q75_educ*q75_re75, age*q75_re74, age*q75_re75, age*age, q75_re74*q75_re75) 
+matrix4[i,age-16] <- sum(merge4*sim@coef[i,]+rnorm(1,0,sim@sigma[i]))
+}
+}
+confidence_intervals_q75_sigma <- apply(matrix4, 2, quantile, probs = c(0.05, 0.95))    #Calculating confidence intervals from simulation
+
+confidence_intervals_q75_sigma
+
+
+#Question 5:
+library(foreign) 
+nsw <- read.dta("C:/Users/AsusPc/Desktop/nsw.dta") 
+model <- glm(nsw$treat~ nsw$age + nsw$education + nsw$black + nsw$hispanic + nsw$married + nsw$nodegree + nsw$re75, family =
+              binomial(), data = nsw) #defining the predcition model
+
+probabilites <- predict.glm(model,newdata=nsw,type="response") #prediction of the probabilities
+trt <- subset(probabilites, nsw$treat == 1) #prediction of the probability to be in treatment group
+h1<-hist(trt, breaks =20)
+ctrl <- subset(probabilites, nsw$treat == "0") #prediction of the probability to be in control group
+h2<-hist(ctrl,breaks=20)
+
+plot(h2,col="red",xlab="Posibility",main="Posibility of Being in the Treatment vs Control")   #Generating histogram
+plot(h1,col="blue",add=T)
+legend("topright", c("Treatment Group", "Control Group"), col=c(rgb(1,0,0,1/4), rgb(0,0,1,1/4)), lwd=10) #legend at top right
