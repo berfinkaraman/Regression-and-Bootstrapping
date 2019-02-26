@@ -2,18 +2,20 @@
 
 set.seed(1)
 #1.a
+
 x<-c(1:999)  #defining the 999 observation
-y<-0.05*x + 5 +rnorm(999, 0, 1)   #generating the assosciated data with normal distribution with 0 as mean and 1 as standard deviation
+y<-0.01*x + 9 +rnorm(999, 0, 1)   #generating the assosciated data with normal distribution with 0 as mean and  as standard deviation
 regression_model<-lm(y~x)        #Creating the classic regression model
+x_outlier<-c(x,2000)       #adding the outlier to x
+y_outlier<-c(y,-5000)      #adding the outlier to y     
+model_outlier<-lm(y_outlier~x_outlier)# regression model with the outlier
+
 #1.b
 summary(regression_model) 
 
-
-x_outlier<-c(x,2000)   #adding to outlier to x
-y_outlier<-c(y,-5000)   #adding to outlier to y       
-model_outlier<-lm(y_outlier~x_outlier) #regression model with the outlier
 #1.c
 summary(model_outlier)
+
 #1.d
 plot(x, y, xlab = "X (999 observation)", ylab = "Y (999 observation)", pch=19)  #plotting the first 999 observation
 abline(regression_model, col='blue') #plotting the regresion line for 999 observation
@@ -48,7 +50,7 @@ median_educ <- median(la$educ)
 median_re74 <- median(la$re74)
 median_re75 <- median(la$re75)
 for(i in 1:10000){
-merge <- c(1, age, median_educ,median_re74,median_re75, median_educ*median_re74,median_educ*median_re75, age*median_re74, age*median_re75, age*age, median_re74*median_re75) 
+merge <- c(1, age, median_educ,median_re74,median_re75, age*age, median_educ*median_re74,median_educ*median_re75, age*median_re74, age*median_re75,  median_re74*median_re75) 
 matrix[i,age-16] <- sum(merge*sim@coef[i,])
 }
 }
@@ -62,7 +64,7 @@ q75_educ <- quantile(la$educ,0.75)
 q75_re74 <- quantile(la$re74, 0.75)
 q75_re75 <- quantile(la$re75, 0.75)
 for(i in 1:10000){
-merge2 <- c(1, age, q75_educ,q75_re74,q75_re75, q75_educ*q75_re74,q75_educ*q75_re75, age*q75_re74, age*q75_re75, age*age, q75_re74*q75_re75) 
+merge2 <- c(1, age, q75_educ,q75_re74,q75_re75,age*age,q75_educ*q75_re74,q75_educ*q75_re75, age*q75_re74, age*q75_re75,  q75_re74*q75_re75) 
 matrix2[i,age-16] <- sum(merge2*sim@coef[i,])
 }
 }
@@ -79,8 +81,8 @@ median_educ <- median(la$educ)
 median_re74 <- median(la$re74)
 median_re75 <- median(la$re75)
 for(i in 1:10000){
-merge3 <- c(1, age, median_educ,median_re74,median_re75, median_educ*median_re74,median_educ*median_re75, age*median_re74, age*median_re75, age*age, median_re74*median_re75) 
-matrix3[i,age-16] <- sum(merge3*sim@coef[i,]+rnorm(1,0,sim@sigma[i]))
+merge3 <- c(1, age, median_educ,median_re74,median_re75, age*age, median_educ*median_re74,median_educ*median_re75, age*median_re74, age*median_re75, median_re74*median_re75) 
+matrix3[i,age-16] <- sum(merge3*sim@coef[i,])+rnorm(1,0,sim@sigma[i])
 }
 }
 confidence_intervals_median_sigma <- apply(matrix3, 2, quantile, probs = c(0.05, 0.95)) #Calculating confidence intervals from simulation
@@ -92,14 +94,117 @@ confidence_intervals_median_sigma
 matrix4 <- matrix(rep(1:10000*39), nrow = 10000, ncol = 39)    
 for (age in c(17:55)){
 for(i in 1:10000){
-merge4 <- c(1, age, q75_educ,q75_re74,q75_re75, q75_educ*q75_re74,q75_educ*q75_re75, age*q75_re74, age*q75_re75, age*age, q75_re74*q75_re75) 
-matrix4[i,age-16] <- sum(merge4*sim@coef[i,]+rnorm(1,0,sim@sigma[i]))
+merge4 <- c(1, age, q75_educ,q75_re74,q75_re75, age*age,q75_educ*q75_re74,q75_educ*q75_re75, age*q75_re74, age*q75_re75, q75_re74*q75_re75) 
+matrix4[i,age-16] <- sum(merge4*sim@coef[i,])+rnorm(1,0,sim@sigma[i])
 }
 }
 confidence_intervals_q75_sigma <- apply(matrix4, 2, quantile, probs = c(0.05, 0.95))    #Calculating confidence intervals from simulation
 
 confidence_intervals_q75_sigma
 
+#2b.i The graph of a.i
+
+plot(x = c(-10000:20000), y = c(-10000:20000), type = "n", xlim = c(17,55),
+     main = "Expected Probability of Wage by Age", xlab = "Age", 
+     ylab = "RE 1978")
+     
+for(i in 1:39){
+segments(
+x0 = age,
+y0 = confidence_intervals_median[1, age-16],
+x1=age,
+y1=confidence_intervals_median[2,age-16],
+lwd=2
+)
+}
+
+#2b.ii The graph of a.ii
+
+plot(x = c(-10000:20000), y = c(-10000:20000), type = "n", xlim = c(17,55),
+     main = "Expected Probability of Wage by Age", xlab = "Age", 
+     ylab = "RE 1978")
+     
+for(i in 1:39){
+segments(
+x0 = age,
+y0 = confidence_intervals_q75[1, age-16],
+x1=age,
+y1=confidence_intervals_q75[2,age-16],
+lwd=2
+)
+}
+
+#2b.iii the graph of b.iii
+
+plot(x = c(-10000:20000), y = c(-10000:20000), type = "n", xlim = c(17,55), 
+     main = "Predicted Probability of Wage by Age", xlab = "Age", 
+     ylab = "RE 1978")
+
+for (age in 17:55){
+segments(
+x0=age,
+y0=confidence_intervals_median_sigma[1, age-16],
+x1=age,
+y1=confidence_intervals_median_sigma[2, age-16],
+lwd=2
+)
+}
+
+
+#2b.iv the graph of b.iv
+
+plot(x = c(-10000:20000), y = c(-10000:20000), type = "n", xlim = c(17,55), 
+     main = "Predicted Probability of Wage by Age", xlab = "Age", 
+     ylab = "RE 1978")
+
+for (age in 17:55){
+segments(
+x0=age,
+y0=confidence_intervals_q75_sigma[1, age-16],
+x1=age,
+y1=confidence_intervals_q75_sigma[2, age-16],
+lwd=2
+)
+}
+
+#Question 3:
+
+set.seed(1)
+library(Matching)
+library(boot)
+library(datasets)
+data("PlantGrowth")
+treatment2 <- which(PlantGrowth$group == "trt2")
+pg <- PlantGrowth[-treatment2, ]  #removing treatment 2 
+reg<-glm(pg$weight~pg$group,data=pg) #regression model
+summary(reg)
+bs <- rep(1:10000)
+for(i in 1:10000){   # for loop for bootstrapping
+  boot.data <- pg[sample(c(1:20),20,replace=TRUE),]
+  bootstrp_r <- glm(boot.data$weight ~ boot.data$group)
+  bs[i]<-bootstrp_r$coeff[2]
+}
+
+hist(bs, main = "Bootstrap Results of Coefficients", col="purple", xlab = "Coefficients") #histogram for bootstrapping results
+box()
+
+#confidence intervals of bootstrapping
+quantile(bs, c(0.025,0.975))
+#confidence intervals of the model
+confint(reg)
+
+
+#Question 4:
+#the function for R squarred
+r2 <- function(y, y_pre){
+  r2 <- (1- (sum((y_pre-y)^2)/sum((y-(mean(y)))^2)))
+         return(r2)}
+#test of the function
+test <- lm(pg$weight~pg$group,data=pg)  
+y <- pg$weight
+y_pre <- predict.lm(test)
+r2(y, y_pre)
+summary(test)
 
 #Question 5:
 library(foreign) 
