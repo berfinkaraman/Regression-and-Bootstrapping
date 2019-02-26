@@ -218,6 +218,13 @@ h1<-hist(trt, breaks =20)
 ctrl <- subset(probabilites, nsw$treat == "0") #prediction of the probability to be in control group
 h2<-hist(ctrl,breaks=20)
 
+
+#seperate histograms
+plot(h2,col="red",xlab="Posibility",main="Posibility of Being in the Control group")
+plot(h1,col="blue",xlab="Posibility",main="Posibility of Being in the Test group")
+
+
+#comparision histogram
 plot(h2,col="red",xlab="Posibility",main="Posibility of Being in the Treatment vs Control")   #Generating histogram
 plot(h1,col="blue",add=T)
 legend("topright", c("Treatment Group", "Control Group"), col=c(rgb(1,0,0,1/4), rgb(0,0,1,1/4)), lwd=10) #legend at top right
