@@ -1,0 +1,5 @@
+# Regression-and-Bootstrapping
+ Knowledge: Information Based Decisions
+
+
+The course focuses on the application of predictive and causal statistical inference for decision making across a wide range of scenarios and contexts. The first part of the course focuses on parametric and non-parametric predictive modeling (regression, cross-validation, bootstrapping, random forests, etc.). The second part of the course focuses on causal inference in randomized control trials and observational studies (statistical matching, synthetic control methods, encouragement design/instrument variables, regression discontinuity design, etc.). Technical aspects of the course focus on computational approaches and real-world challenges, drawing cases from the life sciences, public policy and political science, education, and business. This course also emphasizes the importance of being able to articulate one’s findings effectively and tailor methodology and policy/decision-relevant recommendations for different audiences.
